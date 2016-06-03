@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>slackesque-chat-app</title>
+    <link rel="stylesheet" type="text/css" href="/css/main.css">
+  </head>
+  <body>
+    <ul id="messages"></ul>
+    <form id="chatbox" action="">
+      <input id="m" autocomplete="off" /><button form="chatbox" type="submit">Send</button>
+    </form>
+    <script src="http://code.jquery.com/jquery-1.11.1.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+      var socket = io();
+
+      var element = document.getElementById('chatbox');
+      var formInput = document.getElementById('m');
+
+      element.addEventListener('submit', function(e){
+        e.preventDefault();
+        socket.emit('chat message', formInput.value);
+        formInput.value = '';
+        return false;
+      });
+
+      socket.on('chat message', function(msg){
+        var messages = document.getElementById('messages');
+        var newLi = document.createElement('li');
+
+        newLi.innerHTML = msg;
+        messages.appendChild(newLi);
+
+      })
+
+    </script>
+  </body>
+</html>
