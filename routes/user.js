@@ -35,7 +35,7 @@ module.exports = function(router){
     args.code = new ObjectID;
     console.log(args);
 
-    var newUser = new User(args.admin);
+    var newUser = new User({username: args.admin});
 
     var newOrg = new Org(args);
 
@@ -43,8 +43,9 @@ module.exports = function(router){
 
     newOrg.save().then(function (org) {
       console.log("NEW Orgnaization: ", org)
-      if (!org)
-      res.json({ success: false, message: "Creation Failed, could not create organization" })
+      if (!org){
+        res.json({ success: false, message: "Creation Failed, could not create organization" })        
+      }
       else {
         res.send(org);
       }

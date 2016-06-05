@@ -55,7 +55,7 @@ module.exports = function(apiRouter){
 
   // Route to show a welcome message
   apiRouter.get('/', function(req, res){
-    res.json({message: 'Welcome to the the Slackesque Chat App.'})
+    res.json({message: 'Welcome to the the Slackesque Chat App API.'})
   });
 
   // Route to return all users (GET http://localhost:8080/api/users)
