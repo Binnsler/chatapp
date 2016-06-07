@@ -1,5 +1,5 @@
 var User = require('../models/user.js'); // Get our User mongoose model
-var Org = require('../models/org.js'); // Get our User mongoose model
+var Chat = require('../models/chat.js'); // Get our User mongoose model
 var ObjectID = require('mongodb').ObjectID; // Lets us randomly generate a code
 
 module.exports = function(router){
@@ -11,47 +11,81 @@ module.exports = function(router){
     res.send('I am the about page.');
   });
 
-  // Create user
-  router.post('/create', function(req, res){
+  // Join chat - create User and add them to Chat
+  router.post('/join', function(req, res){
+
     var person = new User({
       username: req.body.username
     });
 
-    person.save(function(err){
-      if(err){
-        throw err;
-      }
-
-      console.log('User saved successfully' + person.username);
-      res.json({success: true});
-    });
-
-    // Have new User join organization from req.body.code
-  });
-
-  // Create Org
-  router.post('/createOrg', function(req, res){
-    var args = req.body;
-    args.code = new ObjectID;
-    console.log(args);
-
-    var newUser = new User({username: args.admin});
-
-    var newOrg = new Org(args);
-
-    newOrg.members.push(newUser._id);
-
-    newOrg.save().then(function (org) {
-      console.log("NEW Orgnaization: ", org)
-      if (!org){
-        res.json({ success: false, message: "Creation Failed, could not create organization" })        
+    person.save().then(function(person){
+      console.log('User saved successfully: ' + person);
+      if (!person){
+        res.json({ success: false, message: "Creation Failed, could not create user" })
       }
       else {
-        res.send(org);
+        res.send(person);
       }
     }, function (err) {
       if (err.code === 11000)
-      res.json({ success: false, message: "An organization with the same name already exists" })
+      res.json({ success: false, message: "A person with the same name already exists" })
+    });
+
+    // Have new User join organization from req.body.code
+    var chatroom = io.of('/' + req.body.code);
+
+    chatroom.on('connection', function(socket){
+      socket.on('chat message', function(msg){
+        chatroom.emit('chat message', msg);
+      });
+    });
+  });
+
+  // Create chat - create User and Chat, add user to Chat
+  router.post('/create', function(req, res){
+    var args = req.body;
+
+    // Create user
+    var newUser = new User({username: args.admin});
+
+    newUser.save().then(function(person){
+      console.log('User saved successfully: ' + person);
+      if (!person){
+        res.json({ success: false, message: "Creation Failed, could not create user" })
+      }
+      else {
+        res.send(person);
+      }
+    }, function (err) {
+      if (err.code === 11000)
+      res.json({ success: false, message: "A person with the same name already exists" })
+    });
+
+    // Create chat
+    var newChat = new Chat(args);
+
+    newChat.members.push(newUser._id);
+
+    newChat.save().then(function(chat){
+      console.log("NEW chatroom: ", chat)
+      if (!chat){
+        res.json({ success: false, message: "Creation Failed, could not create chatroom" })
+      }
+      else {
+        res.send(chat);
+      }
+    }, function (err) {
+      if (err.code === 11000)
+      res.json({ success: false, message: "An chatroom with the same name already exists" })
+    });
+
+    // Connect to socket
+    var chatroom = io.of('/' + newChat._id);
+
+    chatroom.on('connection', function(socket){
+      socket.on('chat message', function(msg){
+        chatroom.emit('chat message', msg);
+      });
     });
   });
 };
